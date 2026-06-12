@@ -187,22 +187,36 @@
         <button onclick="copyResult()">Copy Result / 結果コピー</button>
       </div>
       <div class="note">
-        Rules: blank members are ignored. If an amount is entered, a name is required. Same names are merged as one person.<br>
-        ルール：完全な空白行は無視されます。支払額を入力した場合は名前が必要です。同じ名前は1人として合算されます。
+        Rules:<br>
+        • Blank members are ignored.<br>
+        • If an amount is entered, a name is required.<br>
+        • Same names are merged as one person.<br>
+        • Amounts are displayed to two decimal places.<br>
+        • Due to rounding, a difference of about ±0.01 may occur.<br>
+        ルール：<br>
+        • 完全な空白行は無視されます。<br>
+        • 支払額を入力した場合は名前が必要です。<br>
+        • 同じ名前は1人として合算されます。<br>
+        • 金額は小数点以下2桁まで表示されます。<br>
+        • 端数処理により±0.01程度の誤差が生じる場合があります。
       </div>
     </section>
 
-    <footer>AA Calculator · Offline HTML · Auto Save · v1.4</footer>
+    <footer>AA Calculator · Offline HTML · Auto Save · v1.5</footer>
   </div>
 
   <script>
     const peopleDiv = document.getElementById('people');
-    const STORAGE_KEY = 'aa_calculator_v14_data';
-    const OLD_STORAGE_KEY = 'aa_calculator_v12_data';
+    const STORAGE_KEY = 'aa_calculator_v15_data';
+    const OLD_STORAGE_KEY = 'aa_calculator_v14_data';
+    const OLDER_STORAGE_KEY = 'aa_calculator_v12_data';
     let isLoading = false;
 
     function yen(n) {
-      return '¥' + Math.round(n).toLocaleString('ja-JP');
+      return '¥' + Number(n || 0).toLocaleString('ja-JP', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
     }
 
     function escapeHtml(str) {
@@ -322,6 +336,9 @@
 
       if (!saved) {
         saved = localStorage.getItem(OLD_STORAGE_KEY);
+      }
+      if (!saved) {
+        saved = localStorage.getItem(OLDER_STORAGE_KEY);
         isOldFormat = !!saved;
       }
       if (!saved) return false;
@@ -378,19 +395,19 @@
       let creditors = [];
       let debtors = [];
       data.forEach(p => {
-        const balance = Math.round(p.amount - avg);
+        const balance = Math.round((p.amount - avg) * 100) / 100;
         if (balance > 0) creditors.push({ name: p.name, amount: balance });
         if (balance < 0) debtors.push({ name: p.name, amount: -balance });
       });
 
       let i = 0, j = 0, transfers = [];
       while (i < debtors.length && j < creditors.length) {
-        const pay = Math.min(debtors[i].amount, creditors[j].amount);
+        const pay = Math.round(Math.min(debtors[i].amount, creditors[j].amount) * 100) / 100;
         if (pay > 0) transfers.push(`${debtors[i].name} → ${creditors[j].name}: ${yen(pay)}`);
-        debtors[i].amount -= pay;
-        creditors[j].amount -= pay;
-        if (debtors[i].amount === 0) i++;
-        if (creditors[j].amount === 0) j++;
+        debtors[i].amount = Math.round((debtors[i].amount - pay) * 100) / 100;
+        creditors[j].amount = Math.round((creditors[j].amount - pay) * 100) / 100;
+        if (Math.abs(debtors[i].amount) < 0.01) i++;
+        if (Math.abs(creditors[j].amount) < 0.01) j++;
       }
 
       resultDiv.className = '';
@@ -430,8 +447,29 @@
       const count = data.length;
       const avg = count ? total / count : 0;
       const resultText = document.getElementById('result').innerText.trim();
-      const details = data.map(p => `${p.name}: ${yen(p.amount)}`).join('\n');
-      const text = `AA Calculator Result / AA精算結果\n\nPaid Amounts / 支払額\n${details}\n\nTotal / 合計：${yen(total)}\nPeople / 人数：${count}\nPer Person / 1人あたり：${yen(avg)}\n\n${resultText}`;
+      const details = data.map(p => `${p.name}: ${yen(p.amount)}`).join('
+');
+
+      const text =
+`AA Calculator Result / AA精算結果
+
+Paid Amounts / 支払額
+${details}
+
+Total / 合計: ${yen(total)}
+People / 人数: ${count}
+Per Person / 1人あたり: ${yen(avg)}
+
+Settlement / 精算結果
+${resultText}
+
+Rules / ルール
+- Blank members are ignored. / 完全な空白行は無視されます。
+- If an amount is entered, a name is required. / 支払額を入力した場合は名前が必要です。
+- Same names are merged as one person. / 同じ名前は1人として合算されます。
+- Amounts are displayed to two decimal places. / 金額は小数点以下2桁まで表示されます。
+- Due to rounding, a difference of about ±0.01 may occur. / 端数処理により±0.01程度の誤差が生じる場合があります。`;
+
       navigator.clipboard.writeText(text).then(() => {
         alert('Copied! You can share the result. / コピーしました。結果を共有できます。');
       }).catch(() => {
