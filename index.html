@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AA Calculator</title>
+  <title>Expense Settlement Tool</title>
   <style>
     :root {
       --bg: #f7f3ee;
@@ -153,7 +153,7 @@
 <body>
   <div class="wrap">
     <header>
-      <h1>AA Calculator / AA精算ツール</h1>
+      <h1>費用精算ツール / Expense Settlement Tool</h1>
       <div class="sub">Offline use. Your data is saved automatically in this browser.<br>オフライン対応。入力内容はこのブラウザに自動保存されます。</div>
     </header>
 
@@ -202,7 +202,7 @@
       </div>
     </section>
 
-    <footer>AA Calculator · Offline HTML · Auto Save · v1.5.1</footer>
+    <footer>Expense Settlement Tool · Offline HTML · Auto Save · v1.5.1</footer>
   </div>
 
   <script>
@@ -450,7 +450,7 @@
       const details = data.map(p => `${p.name}: ${yen(p.amount)}`).join('\n');
 
       const text =
-`AA Calculator Result / AA精算結果
+`Expense Settlement Result / 費用精算結果
 
 Paid Amounts / 支払額
 ${details}
